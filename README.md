@@ -1,9 +1,10 @@
 # Pgtrigger
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/pgtrigger`. To experiment with that code, run `bin/console` for an interactive prompt.
+Create trigger for postgres using ActiveRecord migration
 
-TODO: Delete this and the text above, and describe your gem
-
+TODO: 
+ - Create tests
+ - Create reversible method for create_trigger
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -22,7 +23,29 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Create a migration like this
+
+```ruby
+class AddTriggerForIncreaseOrderToTabloidSectionProducts < ActiveRecord::Migration[5.1]
+  def up
+    create_trigger(:tabloid_section_products, :increase_order, before: [:insert]) do
+        <<-TRIGGERSQL
+            NEW.order = (
+              SELECT MAX("order")
+              FROM tabloid_section_products
+              WHERE tabloid_section_id = new.tabloid_section_id
+            );
+
+          RETURN NEW;
+        TRIGGERSQL
+    end
+  end
+
+  def down
+    remove_trigger(:tabloid_section_products, :increase_order)
+  end
+end
+```
 
 ## Development
 
