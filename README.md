@@ -2,7 +2,7 @@
 
 Create trigger for postgres using ActiveRecord migration
 
-TODO: 
+TODO:
  - Create tests
  - Create reversible method for create_trigger
 ## Installation
@@ -26,14 +26,13 @@ Or install it yourself as:
 Create a migration like this
 
 ```ruby
-class AddTriggerForIncreaseOrderToTabloidSectionProducts < ActiveRecord::Migration[5.1]
+class AddTriggerToSomeTable < ActiveRecord::Migration[5.1]
   def up
-    create_trigger(:tabloid_section_products, :increase_order, before: [:insert]) do
+    create_trigger(:table_name, :increase_order, before: [:insert]) do
         <<-TRIGGERSQL
-            NEW.order = (
-              SELECT MAX("order")
-              FROM tabloid_section_products
-              WHERE tabloid_section_id = new.tabloid_section_id
+            NEW."order" = (
+              SELECT COALESCE(MAX("order"), 0) +1
+              FROM table_name
             );
 
           RETURN NEW;
@@ -47,6 +46,11 @@ class AddTriggerForIncreaseOrderToTabloidSectionProducts < ActiveRecord::Migrati
 end
 ```
 
+The create_trigger method, the first and second parameters are about table and name of trigger respectively.
+The third params can be hashes ```before:``` or ```after:```, passing string or array to indicate what event this trigger it will be executed.
+
+Yet is necessary to specify the down method, otherwise the trigger cannot be removed when execute migration rollback.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
@@ -57,10 +61,12 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/pgtrigger. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
+I appreciate new collaborators for this project.
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
 
 ## Code of Conduct
 
-Everyone interacting in the Pgtrigger project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/pgtrigger/blob/master/CODE_OF_CONDUCT.md).
+Everyone interacting in the Pgtrigger project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/alencarandre/pgtrigger/blob/master/CODE_OF_CONDUCT.md).
