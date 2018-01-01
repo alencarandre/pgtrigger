@@ -41,7 +41,7 @@ class AddTriggerToSomeTable < ActiveRecord::Migration[5.1]
   end
 
   def down
-    remove_trigger(:tabloid_section_products, :increase_order)
+    remove_trigger(:table_name, :increase_order)
   end
 end
 ```

@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["André Alencar"]
   spec.email         = ["andreluis88@gmail.com"]
 
-  spec.summary       = "Create Postgresql trigger with ActiveRecord Migration"
-  spec.description   = "Create Postgresql trigger with ActiveRecord Migration"
+  spec.summary       = "Create PostgreSQL trigger with ActiveRecord Migration"
+  spec.description   = "Create PostgreSQL trigger with ActiveRecord Migration"
   spec.homepage      = "https://github.com/alencarandre/pgtrigger"
   spec.license       = "MIT"
 
