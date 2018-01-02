@@ -15,7 +15,7 @@ gem 'pgtrigger'
 
 And then execute:
 
-    $ bundle
+    $ bundle install
 
 Or install it yourself as:
 
@@ -28,9 +28,11 @@ Create a migration like this
 ```ruby
 class AddTriggerToSomeTable < ActiveRecord::Migration[5.1]
   def up
-    create_trigger(:table_name, :increase_order, before: [:insert]) do
+    create_trigger(:table_name, :increase_order, before: [:insert, :update], declare: {var_1: "text := 'test'", var_2: :integer}) do
         <<-TRIGGERSQL
-            NEW."order" = (
+            var_2 := -1
+
+            NEW."order" := (
               SELECT COALESCE(MAX("order"), 0) +1
               FROM table_name
             );
@@ -48,8 +50,9 @@ end
 
 The create_trigger method, the first and second parameters are about table and name of trigger respectively.
 The third params can be hashes ```before:``` or ```after:```, passing string or array to indicate what event this trigger it will be executed.
+The param ```declare:``` is used to declare variables
 
-Yet is necessary to specify the down method, otherwise the trigger cannot be removed when execute migration rollback.
+**NOTE:** Yet is necessary to specify the down method, otherwise the trigger cannot be removed when execute migration rollback.
 
 ## Development
 

@@ -23,12 +23,18 @@ module ActiveRecord
         table_name = trigger["event_object_table"]
         trigger_name = trigger["trigger_name"].gsub("_#{table_name}_trigger", '')
 
-        after_or_before = "#{trigger['action_timing'].downcase}: \"#{trigger['event_manipulation']}\""
+        event_manipulation = discovery_event(trigger['trigger_name']).to_json
+        event_manipulation = "#{trigger['action_timing'].downcase}: #{event_manipulation}"
+
+        procedure = discovery_trigger_method(table_name, trigger_name)
+
+        declare = parse_trigger_declarations(procedure["definition"])
+        declare = ", declare: #{declare}" if declare
 
         triggers << "\n"
-        triggers << "\tcreate_trigger \"#{table_name}\", \"#{trigger_name}\", #{after_or_before} do\n"
+        triggers << "\tcreate_trigger \"#{table_name}\", \"#{trigger_name}\", #{event_manipulation} #{declare} do\n"
         triggers << "<<-TRIGGERBODY\n"
-        triggers << parse_trigger_body(table_name, trigger_name)
+        triggers << parse_trigger_body(procedure["definition"])
         triggers << "\nTRIGGERBODY\n"
         triggers << "\tend # create_trigger"
         triggers << "\n"
@@ -39,17 +45,38 @@ module ActiveRecord
 
     def discovery_triggers
       sql = <<-DETECTTRIGGER
-        SELECT * FROM information_schema.triggers
+        SELECT DISTINCT trigger_name, event_object_table, action_timing
+        FROM information_schema.triggers
         WHERE trigger_schema = current_schema();
       DETECTTRIGGER
-      result = @connection.execute(sql)
+
+      @connection.execute(sql)
     end
 
-    def parse_trigger_body(table_name, trigger_name)
-      procedure = discovery_trigger_method(table_name, trigger_name)
-      definition = procedure["definition"]
+    def discovery_event(trigger_name)
+      sql = <<-DETECTTRIGGER
+        SELECT DISTINCT event_manipulation
+        FROM information_schema.triggers
+        WHERE trigger_schema = current_schema()
+          AND trigger_name = '#{trigger_name}'
+      DETECTTRIGGER
+
+      @connection.execute(sql).pluck("event_manipulation")
+    end
+
+    def parse_trigger_body(definition)
       procedure_body = definition[definition.index("BEGIN")+5..definition.size]
       procedure_body[0..procedure_body.rindex("END") -1].strip
+    end
+
+    def parse_trigger_declarations(definition)
+      declare = definition[definition.index("DECLARE")+7..definition.size]
+      declare = declare[0, declare.index("BEGIN")].strip.split(";")
+      declare = declare.map{ |variable|
+        var = variable.strip
+        var = var.split(" ")
+        { var.shift => var.join(" ") }
+      }
     end
 
     def discovery_trigger_method(table_name, trigger_name)
